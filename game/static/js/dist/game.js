@@ -58,15 +58,121 @@ class GameMenu {
         this.$menu.show();
     }
 }
-class Playground {
+let GAME_OBJECTS = [];
+
+class GameObject {
+    constructor() {
+        GAME_OBJECTS.push(this);
+        this.has_called_start = false;
+        this.timedelta = 0; // 距离上一帧的时间间隔 ms
+    }
+
+    start() {
+
+    }
+
+    update() {
+
+    }
+
+    before_destroy() {
+
+    }
+
+    destroy() {
+        this.before_destroy();
+
+        for (let obj in GAME_OBJECTS) {
+            if (GAME_OBJECTS[obj] === this) {
+                GAME_OBJECTS[i].splice();
+                break;
+            }
+        }
+    }
+}
+
+let last_timestamp;
+let Game_Animation = (timestamp) => {
+    for (let obj of GAME_OBJECTS) {
+        if (!obj.has_called_start) {
+            obj.start();
+            obj.has_called_start = true;
+        } else {
+            obj.timedelta = timestamp - last_timestamp;
+            obj.update();
+        }
+    }
+    last_timestamp = timestamp;
+
+    requestAnimationFrame(Game_Animation);
+}
+
+requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
+    constructor(playground) {
+        super();
+        this.playground = playground;
+        this.$canvas = $(`<canvas></canvas>`);
+        this.ctx = this.$canvas[0].getContext('2d');
+        this.ctx.canvas.width = this.playground.width;
+        this.ctx.canvas.height = this.playground.height;
+        this.playground.$playground.append(this.$canvas);
+    }
+
+    start() {
+
+    }
+
+    update() {
+        this.render();
+    }
+
+    render() {
+        this.ctx.fillStyle = "rgba(0, 0, 0)";
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
+}class Player extends GameObject {
+    constructor(playground, x, y, radius, color, speed, is_me) {
+        super();
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.speed = speed;
+        this.is_me = is_me;
+        this.playground = playground;
+
+        this.ctx = this.playground.game_map.ctx;
+        this.eps = 0.1; // <0.1 = 0
+    }
+
+    start() {
+
+    }
+
+    update() {
+        this.render();
+    }
+
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+}class Playground {
     constructor(root) {
         this.root = root;
-        this.$playground = $(`
-            <div>Game page</div>
-        `);
+        this.$playground = $(`<div class="playground"></div>`);
 
-        this.hide();
+        // this.hide();
         this.root.$game.append(this.$playground);
+
+        this.width = this.$playground.width();
+        this.height = this.$playground.height();
+
+        this.game_map = new GameMap(this);
+        this.players = [];
+        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
 
         this.start();
     }
@@ -91,7 +197,7 @@ class Playground {
         this.id = id;
         this.$game = $('#' + id);
 
-        this.menu = new GameMenu(this);
+        // this.menu = new GameMenu(this);
         this.playground = new Playground(this);
 
         this.start();
