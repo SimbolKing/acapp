@@ -228,6 +228,8 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         });
 
         $(window).keydown(function (e) {
+            if (outer.radius < 10) return;
+
             if (e.which === 81) { // Q
                 outer.cur_skill = "fireball";
 

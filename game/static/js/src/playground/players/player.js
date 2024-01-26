@@ -54,6 +54,9 @@ class Player extends GameObject {
         });
 
         $(window).keydown(function (e) {
+            // 更改BUG：死亡后仍然可以攻击
+            if (outer.radius < 10) return;
+
             if (e.which === 81) { // Q
                 outer.cur_skill = "fireball";
 
