@@ -82,9 +82,9 @@ class GameObject {
     destroy() {
         this.before_destroy();
 
-        for (let obj in GAME_OBJECTS) {
-            if (GAME_OBJECTS[obj] === this) {
-                GAME_OBJECTS[i].splice();
+        for (let i in GAME_OBJECTS) {
+            if (GAME_OBJECTS[i] === this) {
+                GAME_OBJECTS.splice(i, 1);
                 break;
             }
         }
@@ -148,6 +148,8 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
 
         this.ctx = this.playground.game_map.ctx;
         this.eps = 0.1; // <0.1 = 0
+
+        this.cur_skill = null;
     }
 
     start() {
@@ -164,8 +166,33 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.playground.game_map.$canvas.mousedown(function(e) {
             if (e.which === 3) {
                 outer.move_to(e.clientX, e.clientY);
+            } else if (e.which === 1) {
+                if (outer.cur_skill === "fireball") {
+                    outer.shoot_fireball(e.clientX, e.clientY);
+                }
+
+                outer.cur_skill = null;
             }
         });
+
+        $(window).keydown(function(e) {
+            if (e.which === 81) { // Q
+                outer.cur_skill = "fireball";
+
+                return false;
+            }
+        });
+    }
+
+    shoot_fireball(tx, ty) {
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let speed_x = Math.cos(angle), speed_y = Math.sin(angle);
+        let color = "orange";
+        let speed = this.playground.height * 0.5;
+        let move_length = this.playground.height * 1;
+        new Fireball(this.playground, this, x, y, radius, speed_x, speed_y, color, speed, move_length);
     }
 
     get_dist(x1, x2, y1, y2) {
@@ -191,6 +218,48 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
             this.y += this.speed_y * moved;
             this.move_length -= moved;
         }
+        this.render();
+    }
+
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+}class Fireball extends GameObject {
+    constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed, move_length) {
+        super();
+        this.playground = playground;
+        this.player = player;
+        this.ctx = this.playground.game_map.ctx;
+        this.x = x;
+        this.y = y;
+        this.speed_x = speed_x;
+        this.speed_y = speed_y;
+        this.speed = speed;
+        this.radius = radius;
+        this.color = color;
+        this.move_length = move_length;
+        this.eps = 0.1;
+    }
+
+    start() {
+
+    }
+
+    update() {
+        if (this.move_length < this.eps) {
+            this.destroy();
+
+            return false;
+        }
+
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.speed_x * moved;
+        this.y += this.speed_y * moved;
+        this.move_length -= moved;
+
         this.render();
     }
 

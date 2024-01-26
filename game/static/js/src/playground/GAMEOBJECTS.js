@@ -22,9 +22,9 @@ class GameObject {
     destroy() {
         this.before_destroy();
 
-        for (let obj in GAME_OBJECTS) {
-            if (GAME_OBJECTS[obj] === this) {
-                GAME_OBJECTS[i].splice();
+        for (let i in GAME_OBJECTS) {
+            if (GAME_OBJECTS[i] === this) {
+                GAME_OBJECTS.splice(i, 1);
                 break;
             }
         }

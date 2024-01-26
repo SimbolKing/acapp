@@ -1,5 +1,5 @@
 class Fireball extends GameObject {
-    constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed) {
+    constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed, move_length) {
         super();
         this.playground = playground;
         this.player = player;
@@ -11,6 +11,8 @@ class Fireball extends GameObject {
         this.speed = speed;
         this.radius = radius;
         this.color = color;
+        this.move_length = move_length;
+        this.eps = 0.1;
     }
 
     start() {
@@ -18,10 +20,24 @@ class Fireball extends GameObject {
     }
 
     update() {
+        if (this.move_length < this.eps) {
+            this.destroy();
 
+            return false;
+        }
+
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.speed_x * moved;
+        this.y += this.speed_y * moved;
+        this.move_length -= moved;
+
+        this.render();
     }
 
     render() {
-
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
     }
 }
