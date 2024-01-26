@@ -138,6 +138,11 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.radius = radius;
         this.color = color;
 
+        this.attacked_x = 0;
+        this.attacked_y = 0;
+        this.attacked_speed = 0;
+        this.attacked_friction = 0.9;
+
         this.speed = speed;
         this.speed_x = 0;
         this.speed_y = 0;
@@ -154,16 +159,20 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
 
     start() {
         if (this.is_me) {
-            this.add_listening_events()
+            this.add_listening_events();
+        } else {
+            let bot_tx = Math.random() * this.playground.width;
+            let bot_ty = Math.random() * this.playground.height;
+            this.move_to(bot_tx, bot_ty);
         }
     }
 
     add_listening_events() {
         let outer = this;
-        this.playground.game_map.$canvas.on("contextmenu", function() {
+        this.playground.game_map.$canvas.on("contextmenu", function () {
             return false;
         });
-        this.playground.game_map.$canvas.mousedown(function(e) {
+        this.playground.game_map.$canvas.mousedown(function (e) {
             if (e.which === 3) {
                 outer.move_to(e.clientX, e.clientY);
             } else if (e.which === 1) {
@@ -175,7 +184,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
             }
         });
 
-        $(window).keydown(function(e) {
+        $(window).keydown(function (e) {
             if (e.which === 81) { // Q
                 outer.cur_skill = "fireball";
 
@@ -192,7 +201,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         let color = "orange";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new Fireball(this.playground, this, x, y, radius, speed_x, speed_y, color, speed, move_length);
+        new Fireball(this.playground, this, x, y, radius, speed_x, speed_y, color, speed, move_length, this.playground.height * 0.01);
     }
 
     get_dist(x1, x2, y1, y2) {
@@ -208,10 +217,33 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.speed_y = Math.sin(angle);
     }
 
+    is_attacked(angle, damage) {
+        this.radius -= damage;
+        if (this.radius < 10) {
+            this.destroy();
+            return false;
+        }
+        this.attacked_x = Math.cos(angle);
+        this.attacked_y = Math.sin(angle);
+        this.attacked_speed = damage * 100;
+        this.speed *= 1.35;
+    }
+
     update() {
-        if (this.move_length < this.eps) {
+        if (this.attacked_speed > 10) {
+            this.speed_x = this.speed_y = 0;
+            this.move_length = 0;
+            this.x += this.attacked_x * this.attacked_speed * this.timedelta / 1000;
+            this.y += this.attacked_y * this.attacked_speed * this.timedelta / 1000;
+            this.attacked_speed *= this.attacked_friction;
+        } else if (this.move_length < this.eps) {
             this.move_length = 0;
             this.speed_x = this.speed_y = 0;
+            if (!this.is_me) {
+                let bot_tx = Math.random() * this.playground.width;
+                let bot_ty = Math.random() * this.playground.height;
+                this.move_to(bot_tx, bot_ty);
+            }
         } else {
             let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
             this.x += this.speed_x * moved;
@@ -228,7 +260,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.ctx.fill();
     }
 }class Fireball extends GameObject {
-    constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed, move_length) {
+    constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed, move_length, damage) {
         super();
         this.playground = playground;
         this.player = player;
@@ -241,6 +273,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.radius = radius;
         this.color = color;
         this.move_length = move_length;
+        this.damage = damage;
         this.eps = 0.1;
     }
 
@@ -260,7 +293,31 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.y += this.speed_y * moved;
         this.move_length -= moved;
 
+        for (let i = 0; i < this.playground.players.length; i ++ ) {
+            let player = this.playground.players[i];
+            if (this.player !== player && this.is_collision(player)) {
+                this.attack(player);
+            }
+        }
+
         this.render();
+    }
+
+    get_dist(x1, y1, x2, y2) {
+        let dx = x1 - x2;
+        let dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    is_collision(player) {
+        let distance = this.get_dist(this.x, this.y, player.x, player.y);
+        return distance < this.radius + player.radius;
+    }
+
+    attack(player) {
+        let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        player.is_attacked(angle, this.damage);
+        this.destroy();
     }
 
     render() {
@@ -283,6 +340,10 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.game_map = new GameMap(this);
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
+
+        for (let i = 0; i < 5; i ++ ) {
+             this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "blue", this.height * 0.15, false))
+        }
 
         this.start();
     }

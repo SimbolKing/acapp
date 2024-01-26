@@ -6,6 +6,11 @@ class Player extends GameObject {
         this.radius = radius;
         this.color = color;
 
+        this.attacked_x = 0;
+        this.attacked_y = 0;
+        this.attacked_speed = 0;
+        this.attacked_friction = 0.9;
+
         this.speed = speed;
         this.speed_x = 0;
         this.speed_y = 0;
@@ -22,16 +27,20 @@ class Player extends GameObject {
 
     start() {
         if (this.is_me) {
-            this.add_listening_events()
+            this.add_listening_events();
+        } else {
+            let bot_tx = Math.random() * this.playground.width;
+            let bot_ty = Math.random() * this.playground.height;
+            this.move_to(bot_tx, bot_ty);
         }
     }
 
     add_listening_events() {
         let outer = this;
-        this.playground.game_map.$canvas.on("contextmenu", function() {
+        this.playground.game_map.$canvas.on("contextmenu", function () {
             return false;
         });
-        this.playground.game_map.$canvas.mousedown(function(e) {
+        this.playground.game_map.$canvas.mousedown(function (e) {
             if (e.which === 3) {
                 outer.move_to(e.clientX, e.clientY);
             } else if (e.which === 1) {
@@ -43,7 +52,7 @@ class Player extends GameObject {
             }
         });
 
-        $(window).keydown(function(e) {
+        $(window).keydown(function (e) {
             if (e.which === 81) { // Q
                 outer.cur_skill = "fireball";
 
@@ -60,7 +69,7 @@ class Player extends GameObject {
         let color = "orange";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new Fireball(this.playground, this, x, y, radius, speed_x, speed_y, color, speed, move_length);
+        new Fireball(this.playground, this, x, y, radius, speed_x, speed_y, color, speed, move_length, this.playground.height * 0.01);
     }
 
     get_dist(x1, x2, y1, y2) {
@@ -76,10 +85,33 @@ class Player extends GameObject {
         this.speed_y = Math.sin(angle);
     }
 
+    is_attacked(angle, damage) {
+        this.radius -= damage;
+        if (this.radius < 10) {
+            this.destroy();
+            return false;
+        }
+        this.attacked_x = Math.cos(angle);
+        this.attacked_y = Math.sin(angle);
+        this.attacked_speed = damage * 100;
+        this.speed *= 1.35;
+    }
+
     update() {
-        if (this.move_length < this.eps) {
+        if (this.attacked_speed > 10) {
+            this.speed_x = this.speed_y = 0;
+            this.move_length = 0;
+            this.x += this.attacked_x * this.attacked_speed * this.timedelta / 1000;
+            this.y += this.attacked_y * this.attacked_speed * this.timedelta / 1000;
+            this.attacked_speed *= this.attacked_friction;
+        } else if (this.move_length < this.eps) {
             this.move_length = 0;
             this.speed_x = this.speed_y = 0;
+            if (!this.is_me) {
+                let bot_tx = Math.random() * this.playground.width;
+                let bot_ty = Math.random() * this.playground.height;
+                this.move_to(bot_tx, bot_ty);
+            }
         } else {
             let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
             this.x += this.speed_x * moved;
