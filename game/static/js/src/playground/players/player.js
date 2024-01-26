@@ -21,6 +21,7 @@ class Player extends GameObject {
 
         this.ctx = this.playground.game_map.ctx;
         this.eps = 0.1; // <0.1 = 0
+        this.react_time = 0;
 
         this.cur_skill = null;
     }
@@ -95,9 +96,29 @@ class Player extends GameObject {
         this.attacked_y = Math.sin(angle);
         this.attacked_speed = damage * 100;
         this.speed *= 1.35;
+
+        for (let i = 0; i < 20 + Math.random() * 10; i ++ ) {
+            let x = this.x, y = this.y;
+            let radius = this.radius * Math.random() * 0.1;
+            let angle = Math.PI * 2 * Math.random();
+            let speed_x = Math.cos(angle), speed_y = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 5;
+            new Particle(this.playground, x, y, radius, speed_x, speed_y, color, speed, move_length);
+        }
     }
 
     update() {
+        this.react_time += this.timedelta / 1000;
+        if (!this.is_me && this.react_time > 4 && Math.random() < 1 / 300.0) {
+            let player = this.playground.players[0];
+            let tx = player.x + player.speed * this.speed_x * this.timedelta / 1000 * 0.3;
+            let ty = player.y + player.speed * this.speed_y * this.timedelta / 1000 * 0.3;
+
+            this.shoot_fireball(tx, ty);
+        }
+
         if (this.attacked_speed > 10) {
             this.speed_x = this.speed_y = 0;
             this.move_length = 0;
@@ -126,5 +147,13 @@ class Player extends GameObject {
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
+    }
+
+    before_destroy() {
+        for (let i = 0; i < this.playground.players.length; i ++ ) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+            }
+        }
     }
 }

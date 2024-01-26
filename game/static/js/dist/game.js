@@ -130,6 +130,48 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
+}class Particle extends GameObject {
+    constructor(playground, x, y, radius, speed_x, speed_y, color, speed, move_length) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.game_map.ctx;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.speed_x = speed_x;
+        this.speed_y = speed_y;
+        this.color = color;
+        this.speed = speed;
+        this.move_length = move_length;
+        this.friction = 0.9;
+        this.eps = 1;
+    }
+
+    start() {
+
+    }
+
+    update() {
+        if (this.move_length < this.eps || this.speed < this.eps) {
+            this.destroy();
+            return false;
+        }
+
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000)
+        this.x += this.speed_x * moved;
+        this.y += this.speed_y * moved;
+        this.speed *= this.friction;
+        this.move_length -= moved;
+
+        this.render();
+    }
+
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
 }class Player extends GameObject {
     constructor(playground, x, y, radius, color, speed, is_me) {
         super();
@@ -153,6 +195,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
 
         this.ctx = this.playground.game_map.ctx;
         this.eps = 0.1; // <0.1 = 0
+        this.react_time = 0;
 
         this.cur_skill = null;
     }
@@ -227,9 +270,29 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.attacked_y = Math.sin(angle);
         this.attacked_speed = damage * 100;
         this.speed *= 1.35;
+
+        for (let i = 0; i < 20 + Math.random() * 10; i ++ ) {
+            let x = this.x, y = this.y;
+            let radius = this.radius * Math.random() * 0.1;
+            let angle = Math.PI * 2 * Math.random();
+            let speed_x = Math.cos(angle), speed_y = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 5;
+            new Particle(this.playground, x, y, radius, speed_x, speed_y, color, speed, move_length);
+        }
     }
 
     update() {
+        this.react_time += this.timedelta / 1000;
+        if (!this.is_me && this.react_time > 4 && Math.random() < 1 / 300.0) {
+            let player = this.playground.players[0];
+            let tx = player.x + player.speed * this.speed_x * this.timedelta / 1000 * 0.3;
+            let ty = player.y + player.speed * this.speed_y * this.timedelta / 1000 * 0.3;
+
+            this.shoot_fireball(tx, ty);
+        }
+
         if (this.attacked_speed > 10) {
             this.speed_x = this.speed_y = 0;
             this.move_length = 0;
@@ -258,6 +321,14 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
+    }
+
+    before_destroy() {
+        for (let i = 0; i < this.playground.players.length; i ++ ) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+            }
+        }
     }
 }class Fireball extends GameObject {
     constructor(playground, player, x, y, radius, speed_x, speed_y, color, speed, move_length, damage) {
@@ -342,10 +413,15 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
 
         for (let i = 0; i < 5; i ++ ) {
-             this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "blue", this.height * 0.15, false))
+             this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false))
         }
 
         this.start();
+    }
+
+    get_random_color() {
+        let colors = ["blue", "red", "pink", "grey", "green"];
+        return colors[Math.floor(Math.random() * 5)];
     }
 
     start() {
