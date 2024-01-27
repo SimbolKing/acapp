@@ -406,19 +406,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.root = root;
         this.$playground = $(`<div class="playground"></div>`);
 
-        // this.hide();
-        this.root.$game.append(this.$playground);
-
-        this.width = this.$playground.width();
-        this.height = this.$playground.height();
-
-        this.game_map = new GameMap(this);
-        this.players = [];
-        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
-
-        for (let i = 0; i < 5; i ++ ) {
-             this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false))
-        }
+        this.hide();
 
         this.start();
     }
@@ -438,6 +426,18 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
 
     show() {
         this.$playground.show();
+        this.root.$game.append(this.$playground);
+
+        this.width = this.$playground.width();
+        this.height = this.$playground.height();
+
+        this.game_map = new GameMap(this);
+        this.players = [];
+        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true))
+
+        for (let i = 0; i < 5; i ++ ) {
+             this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false))
+        }
     }
 
     hide() {
@@ -448,7 +448,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         this.id = id;
         this.$game = $('#' + id);
 
-        // this.menu = new GameMenu(this);
+        this.menu = new GameMenu(this);
         this.playground = new Playground(this);
 
         this.start();
