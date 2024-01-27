@@ -216,11 +216,12 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
             return false;
         });
         this.playground.game_map.$canvas.mousedown(function (e) {
+            const rect = outer.ctx.canvas.getBoundingClientRect();
             if (e.which === 3) {
-                outer.move_to(e.clientX, e.clientY);
+                outer.move_to(e.clientX - rect.left, e.clientY - rect.top);
             } else if (e.which === 1) {
                 if (outer.cur_skill === "fireball") {
-                    outer.shoot_fireball(e.clientX, e.clientY);
+                    outer.shoot_fireball(e.clientX - rect.left, e.clientY - rect.top);
                 }
 
                 outer.cur_skill = null;
@@ -228,6 +229,7 @@ requestAnimationFrame(Game_Animation);class GameMap extends GameObject {
         });
 
         $(window).keydown(function (e) {
+            // 更改BUG：死亡后仍然可以攻击
             if (outer.radius < 10) return;
 
             if (e.which === 81) { // Q
