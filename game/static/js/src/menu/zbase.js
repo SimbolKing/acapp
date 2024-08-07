@@ -1,6 +1,8 @@
 class AcGameMenu {
     constructor(root) {
         this.root = root;
+
+        // 渲染menu界面
         this.$menu = $(`
 <div class="ac-game-menu">
     <div class="ac-game-menu-field">
@@ -16,6 +18,8 @@ class AcGameMenu {
     </div>
 </div>
         `);
+
+        // 添加menu到主页面
         this.root.$ac_game.append(this.$menu);
 
         // 显示3个按钮
@@ -23,6 +27,7 @@ class AcGameMenu {
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings-mode');
 
+        // 初始化
         this.start();
     }
 
@@ -30,62 +35,33 @@ class AcGameMenu {
         this.add_listening_events();
     }
 
+    // 监听函数
     add_listening_events() {
+        // 获取函数外的this
         let outer = this;
+
         this.$single_mode.click(function () {
-            outer.hide();
-            outer.root.playground.show();
+            outer.hide(); // 关闭menu
+            outer.root.playground.show(); // 展示playground
         });
+
         this.$multi_mode.click(function () {
             console.log('multi');
         });
+
         this.$settings.click(function () {
             console.log('settings');
         });
     }
 
-    show() { // show menu
+    // 打开menu
+    show() {
         this.$menu.show();
     }
 
-    hide() { // hide menu
+    // 关闭menu
+    hide() {
         this.$menu.hide();
     }
 
-}class AcGamePlayground {
-    constructor(root) {
-        this.root = root;
-        this.$playground = $(`
-<div>game page<div/>            
-        `);
-        this.hide();
-        this.root.$ac_game.append(this.$playground);
-
-        this.start();
-    }
-
-    start() {
-
-    }
-
-    show() {
-        this.$playground.show();
-    }
-
-    hide() {
-        this.$playground.hide();
-    }
-}class AcGame {
-    constructor(id) {
-        this.id = id;
-        this.$ac_game = $('#' + id);
-        this.menu = new AcGameMenu(this);
-        this.playground = new AcGamePlayground(this);
-
-        this.start();
-    }
-
-    start() {
-
-    }
 }
