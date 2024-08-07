@@ -1,3 +1,6 @@
+**/__pycache__
+*.swp
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
